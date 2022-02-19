@@ -62,6 +62,11 @@ function API () {
   }
 
   this.login = {
+    // 登录
+    adminLogin (params) {
+      return that.post('/tbAdmin/adminLogin', params)
+    },
+    // 获取验证码
     getCode () {
       return that.url('/tbAdmin/getCode?' + (Math.floor(Math.random() * 1000)))
     }

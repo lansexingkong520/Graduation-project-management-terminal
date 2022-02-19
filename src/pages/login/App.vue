@@ -113,7 +113,24 @@ export default {
       })
     },
     // 管理员登录
-    login () {
+    async login () {
+      if (this.userName === '' || this.password === '' || this.code === '') {
+        this.err = true
+        return
+      }
+      this.btnLoading = true
+      let params = {
+        username: this.userName,
+        password: this.password,
+        captcha: this.code
+      }
+      let [err, res] = await API.login.adminLogin(params)
+      if (err || res.code !== '200') {
+        this.btnLoading = false
+        return
+      }
+      // console.log(res)
+      localStorage.setItem('userInfo', JSON.stringify(res.data))
       location.href = 'admin.html'
     },
     // 刷新验证码
@@ -130,8 +147,8 @@ export default {
 
 <style>
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /*font-family: 'Avenir', Helvetica, Arial, sans-serif;*/
+  /*-webkit-font-smoothing: antialiased;*/
+  /*-moz-osx-font-smoothing: grayscale;*/
 }
 </style>
