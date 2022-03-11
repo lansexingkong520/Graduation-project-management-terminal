@@ -11,10 +11,22 @@ module.exports = {
     assetsSubDirectory: 'static',
     assetsPublicPath: '',
     proxyTable: {
-      '/tbAdmin': {
+      '/': {
         target: 'http://localhost:8888',
         changeOrigin: true
       }
+      // '/tbAdmin': {
+      //   target: 'http://localhost:8888',
+      //   changeOrigin: true
+      // },
+      // '/tbPost': {
+      //   target: 'http://localhost:8888',
+      //   changeOrigin: true
+      // },
+      // '/tbComment': {
+      //   target: 'http://localhost:8888',
+      //   changeOrigin: true
+      // }
     },
 
     // Various Dev Server settings

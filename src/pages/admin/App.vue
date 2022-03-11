@@ -1,12 +1,14 @@
 <template>
   <div id="app">
-    123
+    <page-frame></page-frame>
   </div>
 </template>
 
 <script>
+import PageFrame from '../../components/page-frame'
 export default {
-  name: 'App'
+  name: 'App',
+  components: {PageFrame}
 }
 </script>
 

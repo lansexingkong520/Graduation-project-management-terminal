@@ -1,0 +1,19 @@
+
+.brat-elevation {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid #33333347
+}
+
+/* 超出一定行数就出现省略号 》 谷歌 */
+.ellipsisText_1, .ellipsisText_3 {
+  text-overflow: ellipsis ;
+  display: -webkit-box ;
+  -webkit-box-orient: vertical;
+  overflow: hidden
+}
+.ellipsisText_1{
+  -webkit-line-clamp: 1;
+}
+.ellipsisText_3{
+  -webkit-line-clamp: 3;
+}

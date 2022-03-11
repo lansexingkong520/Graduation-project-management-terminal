@@ -71,6 +71,45 @@ function API () {
       return that.url('/tbAdmin/getCode?' + (Math.floor(Math.random() * 1000)))
     }
   }
+
+  this.postList = {
+    // 查帖子列表
+    getPostList (params) {
+      return that.get('/tbPost/managementPosts', params)
+    }
+  }
+
+  this.commentList = {
+    // 查评论列表
+    getCommentList (params) {
+      return that.get('/tbComment/managementComments', params)
+    }
+  }
+
+  this.userList = {
+    // 查评论列表
+    getUserList (params) {
+      return that.get('/tbUser/managementUsers', params)
+    }
+  }
+
+  this.systemInfoList = {
+    // 查系统消息列表
+    getSystemInfoList (params) {
+      return that.get('/tbSystemmessages/managementSystemInfo', params)
+    },
+    // 添加系统消息
+    addSystemInfo (params) {
+      return that.post('/tbSystemmessages/addSystemInfo', params)
+    }
+  }
+
+  this.imgList = {
+    getPostImgList (params) {
+      return that.get('/tbPicture/managementPostImg', params)
+    }
+  }
+
   // this.search = {
   //   getResult (params) {
   //     return that.post('/sys-es/es', params)

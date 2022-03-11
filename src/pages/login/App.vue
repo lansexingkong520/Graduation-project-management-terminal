@@ -129,7 +129,6 @@ export default {
         this.btnLoading = false
         return
       }
-      // console.log(res)
       localStorage.setItem('userInfo', JSON.stringify(res.data))
       location.href = 'admin.html'
     },
