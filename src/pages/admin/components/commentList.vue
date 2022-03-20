@@ -1,5 +1,16 @@
 <template>
   <div>
+    <v-subheader>
+      <v-spacer />
+      <div style="width: 300px">
+        <el-input
+          @keydown.enter.native="search"
+          placeholder="请输入搜索的评论内容"
+          v-model="searchInput">
+          <el-button slot="append" icon="el-icon-search"></el-button>
+        </el-input>
+      </div>
+    </v-subheader>
 
     <!-- Table -->
     <div
@@ -62,7 +73,7 @@
                     icon x-small v-on="on" v-bind="attrs"
                     style="border: 0.1px solid #FE9A5E; color: #FE9A5E; margin: 0 36px; padding: 12px"
                   >
-                    <v-icon size="16" @click.stop="singleDelete(scope.row)">mdi-close</v-icon>
+                    <v-icon size="16" @click.stop="singleDeleteConfirm(scope.row)">mdi-close</v-icon>
                   </v-btn>
                 </template>
                 <span>删除</span>
@@ -75,6 +86,7 @@
         background
         @current-change="handleCurrentChange"
         :page-size="max"
+        :current-page="pagination[favorite].page"
         layout="prev, pager, next"
         :total="pagination[favorite].size">
       </el-pagination>
@@ -94,6 +106,19 @@ export default {
     wrapWidth: {
       type: Number,
       default: 0
+    }
+  },
+  watch: {
+    searchInput (val) {
+      if (val.trim()) {
+        this.favorite = 1
+        this.pagination[this.favorite].page = 1
+        this.search()
+        return
+      }
+      this.favorite = 0
+      this.pagination[this.favorite].page = 1
+      this.getCommentList()
     }
   },
   computed: {
@@ -120,14 +145,16 @@ export default {
       // 分页
       pagination: [{page: 1, pages: 0, size: 0},
         {page: 1, pages: 0, size: 0}
-      ]
+      ],
+      // 搜索内容
+      searchInput: ''
     }
   },
   methods: {
     async getCommentList () {
       this.$nextTick(() => {
         // 解决表格错位
-        if (this.$refs.table) this.$refs.table.doLayout()
+        this.$refs.table.doLayout()
       })
       let params = {
         start: this.pagination[this.favorite].page - 1,
@@ -159,34 +186,95 @@ export default {
           item.isBgc = !item.isBgc
         }
       })
-
       this.commentList = res.data
       Object.assign(this.pagination[this.favorite], {
         size: res.count
       })
     },
-    // 查看帖子详情
-    viewDetail (item) {
-      console.log(item)
+    async search () {
+      this.$nextTick(() => {
+        // 解决表格错位
+        this.$refs.table.doLayout()
+      })
+      let params = {
+        start: this.pagination[this.favorite].page - 1,
+        size: this.max,
+        search: this.searchInput.trim()
+      }
+      let [err, res] = await API.commentList.searchCommentList(params)
+      if (err || res.code !== '200') {
+        this.$message.error('未获取评论信息')
+        return
+      }
+      if (!res.data) {
+        return
+      }
+      this.commentList = []
+      res.data.forEach((item, index) => {
+        Object.assign(item, {
+          id: index,
+          serialNumber: this.serialNo + (index + 1),
+          commentMessage: item.message,
+          commentReleaseTime: item.time,
+          commentAuthor: item.tbUser.username,
+          isBgc: false,
+          operate: {
+            isDelete: 1
+          }
+        })
+        // 判断是否是偶数行添加斑马色
+        if (index % 2 !== 0) {
+          item.isBgc = !item.isBgc
+        }
+      })
+      this.commentList = res.data
+      Object.assign(this.pagination[this.favorite], {
+        size: res.count
+      })
     },
-    // 帖子单删
-    singleDelete (item) {
-      console.log(item)
+    // 评论删除确认
+    singleDeleteConfirm (item) {
+      this.$confirm('确认删除此评论?该评论删除，其下的回复也会删除哦~', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 点击确定的操作(调用接口)
+        this.singleDelete(item)
+      }).catch(() => {
+        // 取消
+      })
+    },
+    // 评论单删
+    async singleDelete (item) {
+      let err
+      let res
+      if (item.distinguish === 0) {
+        [err, res] = await API.commentList.deleteComment(item.cid)
+      } else if (item.distinguish === 1) {
+        [err, res] = await API.commentList.deleteReply(item.cid)
+      }
+      if (err || res.code !== '200') {
+        this.$message.error('评论删除失败')
+        return
+      }
+      this.$message.success(res.msg)
+      await this.getCommentList()
     },
     // 分页，页数改变，重新搜索
     handleCurrentChange (item) {
       this.pagination[this.favorite].page = item
-      this.getCommentList()
+      if (this.favorite === 0) {
+        this.getCommentList()
+      }
+      if (this.favorite === 1) {
+        this.search()
+      }
     },
     insertRowStyle ({row, rowIndex}) {
       let params = {
         height: '42px',
         border: 'none !important'
-      }
-      if (row.operate.toTop) {
-        params['background-color'] = '#E8F4FE'
-      } else if (row.isBgc) {
-        params['background-color'] = '#f8fbfd'
       }
       return params
     },

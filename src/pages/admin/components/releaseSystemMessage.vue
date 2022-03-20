@@ -25,8 +25,8 @@
             v-model="systemMsgForm.content"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button @click="resetForm('systemMsgForm')">重置</el-button>
-          <el-button type="primary" @click="submitForm('systemMsgForm')">发布</el-button>
+          <el-button @click="resetForm('systemMsgForm')">重 置</el-button>
+          <el-button type="primary" @click="submitForm('systemMsgForm')">发 布</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -58,12 +58,12 @@ export default {
   },
   methods: {
     // 上传提交表单
-    submitForm (formName) {
-      if (this[formName].title === '' || this[formName].title === null) {
+    async submitForm (formName) {
+      if (this[formName].title === '') {
         this.$message.warning('请填写系统消息标题')
         return
       }
-      if (this[formName].content === '' || this[formName].content === null) {
+      if (this[formName].content === '') {
         this.$message.warning('请填写系统消息标题')
         return
       }
@@ -71,15 +71,13 @@ export default {
         title: this.systemMsgForm.title,
         content: this.systemMsgForm.content
       }
-      let [err, res] = API.systemInfoList.addSystemInfo(params)
-      console.log(res)
+      let [err, res] = await API.systemInfoList.addSystemInfo(params)
       if (err || res.code !== '200') {
         this.$message.error('系统消息发布失败')
         return
       }
-      this[formName] = {}
-      // 清空表单内容
-      this.$refs[formName].resetFields()
+      this.$message.success(res.msg)
+      this.resetForm(formName)
     },
     // 重置表单
     resetForm (formName) {

@@ -127,9 +127,11 @@ export default {
       let [err, res] = await API.login.adminLogin(params)
       if (err || res.code !== '200') {
         this.btnLoading = false
+        this.$message.error(res.msg)
+        this.onclickRefreshCode()
         return
       }
-      localStorage.setItem('userInfo', JSON.stringify(res.data))
+      localStorage.setItem('adminInfo', JSON.stringify(res.data))
       location.href = 'admin.html'
     },
     // 刷新验证码
@@ -138,6 +140,9 @@ export default {
     }
   },
   created () {
+    if (localStorage.getItem('adminInfo')) {
+      location.href = 'admin.html'
+    }
     this.initPage()
     this.codeURL = API.login.getCode()
   }

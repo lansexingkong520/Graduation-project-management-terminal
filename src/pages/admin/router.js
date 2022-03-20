@@ -51,9 +51,9 @@ export default new Router({
       component: () => import('./components/releaseSystemMessage')
     },
     {
-      path: '/modifySystemInformation',
-      name: 'modifySystemInformation',
-      component: () => import('./components/modifySystemInformation')
+      path: '/postDetail',
+      name: 'postDetail',
+      component: () => import('./components/postDetail')
     }
   ]
 })

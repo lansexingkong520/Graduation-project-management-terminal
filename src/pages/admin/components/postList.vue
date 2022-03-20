@@ -1,6 +1,28 @@
 <template>
   <div>
 
+    <v-subheader>
+      <v-spacer />
+      <div style="width: 400px">
+        <el-input
+          placeholder="请输入搜索内容"
+          v-model="searchInput"
+          size="small"
+          @keydown.enter.native="search"
+        >
+          <el-select style="width: 100px" v-model="searchSelect" slot="prepend">
+            <el-option
+              v-for="item in options"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+          <el-button slot="append" icon="el-icon-search"></el-button>
+        </el-input>
+      </div>
+    </v-subheader>
+
     <!-- Table -->
     <div
       class="mt-3 white px-4 pt-4 brat-elevation"
@@ -16,12 +38,6 @@
         :cell-class-name="insertCellClassName"
         ref="table"
       >
-<!--        <el-table-column-->
-<!--          type="selection"-->
-<!--          width="50"-->
-<!--          :reserve-selection="true"-->
-<!--        >-->
-<!--        </el-table-column>-->
         <el-table-column
           id="table1"
           v-for="item in headers"
@@ -94,7 +110,7 @@
                     icon x-small v-on="on" v-bind="attrs"
                     style="border: 0.1px solid #FE9A5E; color: #FE9A5E; margin: 0 10px; padding: 12px"
                   >
-                    <v-icon size="16" @click.stop="singleDelete(scope.row)">mdi-close</v-icon>
+                    <v-icon size="16" @click.stop="singleDeleteConfirm(scope.row)">mdi-close</v-icon>
                   </v-btn>
                 </template>
                 <span>删除</span>
@@ -107,6 +123,7 @@
         background
         @current-change="handleCurrentChange"
         :page-size="max"
+        :current-page="pagination[favorite].page"
         layout="prev, pager, next"
         :total="pagination[favorite].size">
       </el-pagination>
@@ -133,6 +150,19 @@ export default {
       return (this.pagination[this.favorite].page - 1) * 10
     }
   },
+  watch: {
+    searchInput (val) {
+      if (val.trim()) {
+        this.favorite = 1
+        this.pagination[this.favorite].page = 1
+        this.search()
+        return
+      }
+      this.favorite = 0
+      this.pagination[this.favorite].page = 1
+      this.getPostList()
+    }
+  },
   data () {
     return {
       headers: [
@@ -153,6 +183,13 @@ export default {
       // 分页
       pagination: [{page: 1, pages: 0, size: 0},
         {page: 1, pages: 0, size: 0}
+      ],
+      searchInput: '',
+      // 搜索选择默认为标题
+      searchSelect: '标题',
+      options: [{label: '标题', value: 1, name: 'title'},
+        {label: '内容', value: 2, name: 'content'},
+        {label: '作者', value: 3, name: 'author'}
       ]
     }
   },
@@ -160,7 +197,7 @@ export default {
     async getPostList () {
       this.$nextTick(() => {
         // 解决表格错位
-        if (this.$refs.table) this.$refs.table.doLayout()
+        this.$refs.table.doLayout()
       })
       let params = {
         start: this.pagination[this.favorite].page - 1,
@@ -199,18 +236,101 @@ export default {
         size: res.count
       })
     },
+    async search () {
+      this.$nextTick(() => {
+        // 解决表格错位
+        this.$refs.table.doLayout()
+      })
+      let params = {
+        start: this.pagination[this.favorite].page - 1,
+        size: this.max,
+        search: this.searchInput.trim()
+      }
+      if (this.searchSelect === '标题') {
+        Object.assign(params, {
+          range: 'title'
+        })
+      } else {
+        this.options.forEach(item => {
+          if (item.value === this.searchSelect) {
+            Object.assign(params, {
+              range: item.name
+            })
+          }
+        })
+      }
+      let [err, res] = await API.postList.searchPostList(params)
+      if (err || res.code !== '200') {
+        this.$message.error('未获取帖子信息')
+        return
+      }
+      if (!res.data) {
+        return
+      }
+      this.postList = []
+      res.data.forEach((item, index) => {
+        Object.assign(item, {
+          id: item.postid,
+          serialNumber: this.serialNo + (index + 1),
+          postTitle: item.title,
+          postContent: item.content,
+          postReleaseTime: item.time,
+          postAuthor: item.tbUser.username,
+          isBgc: false,
+          operate: {
+            look: 1,
+            isDelete: 1
+          }
+        })
+        // 判断是否是偶数行添加斑马色
+        if (index % 2 !== 0) {
+          item.isBgc = !item.isBgc
+        }
+      })
+      this.postList = res.data
+      Object.assign(this.pagination[this.favorite], {
+        size: res.count
+      })
+    },
     // 查看帖子详情
     viewDetail (item) {
-      console.log(item)
+      this.$router.push({
+        path: '/postDetail',
+        query: {id: item.id}
+      })
+    },
+    // 帖子删除确认
+    singleDeleteConfirm (item) {
+      this.$confirm('确认删除此帖子？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 点击确定的操作(调用接口)
+        this.singleDelete(item)
+      }).catch(() => {
+        // 取消
+      })
     },
     // 帖子单删
-    singleDelete (item) {
-      console.log(item)
+    async singleDelete (item) {
+      let [err, res] = await API.postList.deletePost(item.id)
+      if (err || res.code !== '200') {
+        this.$message.error('帖子删除失败')
+        return
+      }
+      this.$message.success(res.msg)
+      await this.getPostList()
     },
     // 分页，页数改变，重新搜索
     handleCurrentChange (item) {
       this.pagination[this.favorite].page = item
-      this.getPostList()
+      if (this.favorite === 0) {
+        this.getPostList()
+      }
+      if (this.favorite === 1) {
+        this.search()
+      }
     },
     insertRowStyle ({row, rowIndex}) {
       let params = {

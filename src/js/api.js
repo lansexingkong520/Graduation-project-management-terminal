@@ -76,6 +76,18 @@ function API () {
     // 查帖子列表
     getPostList (params) {
       return that.get('/tbPost/managementPosts', params)
+    },
+    // 删除帖子
+    deletePost (id) {
+      return that.delete(`/tbPost/deletePost/${id}`)
+    },
+    // 查帖子详情
+    getPostDetail (id) {
+      return that.get('/tbPost/getPostDetail', id)
+    },
+    // 搜索
+    searchPostList (params) {
+      return that.get('/tbPost/searchPostList', params)
     }
   }
 
@@ -83,13 +95,29 @@ function API () {
     // 查评论列表
     getCommentList (params) {
       return that.get('/tbComment/managementComments', params)
+    },
+    // 删除用户评论
+    deleteComment (id) {
+      return that.delete(`/tbComment/deleteComment/${id}`)
+    },
+    // 删除评论回复
+    deleteReply (id) {
+      return that.delete(`/tbCommentreply/deleteReply/${id}`)
+    },
+    // 搜索
+    searchCommentList (params) {
+      return that.get('/tbComment/searchCommentList', params)
     }
   }
 
   this.userList = {
-    // 查评论列表
+    // 查用户列表
     getUserList (params) {
       return that.get('/tbUser/managementUsers', params)
+    },
+    // 搜索
+    searchUserList (params) {
+      return that.get('/tbUser/searchUserList', params)
     }
   }
 
@@ -101,12 +129,25 @@ function API () {
     // 添加系统消息
     addSystemInfo (params) {
       return that.post('/tbSystemmessages/addSystemInfo', params)
+    },
+    // 修改系统消息
+    modifySystemInfo (params) {
+      return that.post('/tbSystemmessages/modifySystemInfo', params)
+    },
+    // 搜索
+    searchSystemInfoList (params) {
+      return that.get('/tbSystemmessages/searchSystemInfoList', params)
     }
   }
 
   this.imgList = {
+    // 查帖子图片列表
     getPostImgList (params) {
       return that.get('/tbPicture/managementPostImg', params)
+    },
+    // 搜索
+    searchPostImgList (params) {
+      return that.get('/tbPicture/searchPostImgList', params)
     }
   }
 

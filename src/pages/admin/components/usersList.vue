@@ -1,5 +1,17 @@
 <template>
   <div>
+    <v-subheader>
+      <v-spacer />
+      <div style="width: 300px">
+        <el-input
+          placeholder="请输入搜索的用户名"
+          v-model="searchInput"
+          @keydown.enter.native="search"
+        >
+          <el-button slot="append" icon="el-icon-search"></el-button>
+        </el-input>
+      </div>
+    </v-subheader>
 
     <!-- Table -->
     <div
@@ -87,6 +99,7 @@
         background
         @current-change="handleCurrentChange"
         :page-size="max"
+        :current-page="pagination[favorite].page"
         layout="prev, pager, next"
         :total="pagination[favorite].size">
       </el-pagination>
@@ -107,6 +120,19 @@ export default {
     wrapWidth: {
       type: Number,
       default: 0
+    }
+  },
+  watch: {
+    searchInput (val) {
+      if (val.trim()) {
+        this.favorite = 1
+        this.pagination[this.favorite].page = 1
+        this.search()
+        return
+      }
+      this.favorite = 0
+      this.pagination[this.favorite].page = 1
+      this.getUserList()
     }
   },
   computed: {
@@ -135,14 +161,16 @@ export default {
       // 分页
       pagination: [{page: 1, pages: 0, size: 0},
         {page: 1, pages: 0, size: 0}
-      ]
+      ],
+      // 搜索内容
+      searchInput: ''
     }
   },
   methods: {
     async getUserList () {
       this.$nextTick(() => {
         // 解决表格错位
-        if (this.$refs.table) this.$refs.table.doLayout()
+        this.$refs.table.doLayout()
       })
       let params = {
         start: this.pagination[this.favorite].page - 1,
@@ -181,24 +209,68 @@ export default {
         size: res.count
       })
     },
+    async search () {
+      this.$nextTick(() => {
+        // 解决表格错位
+        this.$refs.table.doLayout()
+      })
+      let params = {
+        start: this.pagination[this.favorite].page - 1,
+        size: this.max,
+        search: this.searchInput.trim()
+      }
+      let [err, res] = await API.userList.searchUserList(params)
+      if (err || res.code !== '200') {
+        this.$message.error('未获取用户信息')
+        return
+      }
+      if (!res.data) {
+        return
+      }
+      this.userList = []
+      // 正则匹配，给显示的手机号打码
+      let reg = /(\d{3})\d{4}(\d{4})/
+      res.data.forEach((item, index) => {
+        Object.assign(item, {
+          id: item.uid,
+          serialNumber: this.serialNo + (index + 1),
+          sculpture: item.picURL,
+          phone: item.tel.replace(reg, '$1****$2'),
+          introduction: item.selfintroduction,
+          isBgc: false,
+          operate: {
+            isDelete: 1
+          }
+        })
+        // 判断是否是偶数行添加斑马色
+        if (index % 2 !== 0) {
+          item.isBgc = !item.isBgc
+        }
+      })
+      this.userList = res.data
+      Object.assign(this.pagination[this.favorite], {
+        size: res.count
+      })
+    },
     // 用户单删
     singleDelete (item) {
       console.log(item)
+      this.$message.warning('此功能暂时不开放')
     },
     // 分页，页数改变，重新搜索
     handleCurrentChange (item) {
       this.pagination[this.favorite].page = item
-      this.getUserList()
+      if (this.favorite === 0) {
+        this.getUserList()
+      }
+      if (this.favorite === 1) {
+        this.search()
+      }
     },
     insertRowStyle ({row, rowIndex}) {
       let params = {
         height: '42px',
         border: 'none !important'
-      }
-      if (row.operate.toTop) {
-        params['background-color'] = '#E8F4FE'
-      } else if (row.isBgc) {
-        params['background-color'] = '#f8fbfd'
       }
       return params
     },
