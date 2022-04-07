@@ -151,23 +151,23 @@ function API () {
     }
   }
 
-  // this.search = {
-  //   getResult (params) {
-  //     return that.post('/sys-es/es', params)
-  //   }
-  // }
-  //
-  // this.kgMark = {
-  //   getNodeRelation (params) {
-  //     return that.get(`/sys-admin/kgMark/searchNodeRelation/${params}`)
-  //   }
-  // }
-  //
-  // this.questions = {
-  //   getAnswers (params) {
-  //     return that.get(`/sys-admin/rest/appleyk/question/query?question=${params}`)
-  //   }
-  // }
+  this.dataStatistics = {
+    // 帖子收藏数据
+    getPostConllection () {
+      return that.get('/postCollection/getPostConllectionCount')
+    },
+    // 用户关注数据
+    getUserAttention () {
+      return that.get('/userAttention/getUserAttentionCount')
+    },
+    // 用户注册数据
+    getUserReg (params) {
+      return that.get('/tbUser/getUserRegCount', params)
+    },
+    // 帖子发布数据
+    getAddPost (params) {
+      return that.get('/tbPost/getAddPostCount', params)
+    }
+  }
 }
-
 export default new API()
