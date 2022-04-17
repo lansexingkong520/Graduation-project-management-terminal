@@ -56,14 +56,23 @@
       </el-container>
     </el-container>
 
-    <!-- 修改管理员消息对话框 -->
+    <!-- 修改管理员信息对话框 -->
     <el-dialog
       title="管理员信息修改"
-      :visible.sync="dialogAlter"
+      :visible.sync="dialogAlterInfo"
       :width="wrapWidth * 0.4 + 'px'"
       center
       :close-on-click-modal="false"
       :close-on-press-escape="false">
+      <div style="width: 100px;margin: auto" class="pb-4">
+        <el-upload
+          action="#"
+          :show-file-list="false"
+          :on-change="handleAddChange"
+          :auto-upload="false">
+          <img width="100" height="100" :src="(imageUrl !== null && imageUrl !== '') ? imageUrl : adminInfo.picUrl" class="avatar" style="border-radius: 50%">
+        </el-upload>
+      </div>
       <el-form
         label-position="right"
         label-width="120px"
@@ -90,8 +99,48 @@
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-          <el-button @click="cancelForm">取 消</el-button>
+          <el-button @click="cancelFormInfo">取 消</el-button>
           <el-button type="primary" @click="commitChange">修 改</el-button>
+        </span>
+    </el-dialog>
+    <!-- 修改管理员密码对话框 -->
+    <el-dialog
+      title="修改密码"
+      :visible.sync="dialogAlterSecretCode"
+      :width="wrapWidth * 0.4 + 'px'"
+      center
+      :close-on-click-modal="false"
+      :close-on-press-escape="false">
+      <el-form
+        label-position="right"
+        label-width="120px"
+        ref="adminInfoForm"
+      >
+        <el-form-item label="密  码">
+          <el-input
+            placeholder="请输入密码"
+            v-model="password">
+          </el-input>
+        </el-form-item>
+        <el-form-item label="确认密码">
+          <el-input
+            placeholder="请输入确认密码"
+            v-model="configPW">
+          </el-input>
+        </el-form-item>
+        <el-form-item label="验证码">
+          <div class="d-flex justify-space-between">
+            <el-input
+              placeholder="请输入验证码"
+              v-model="verificationCode">
+            </el-input>
+            <el-button class="ml-4" type="primary" @click="getVerificationCode">获取验证码</el-button>
+          </div>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+          <el-button @click="cancelFormSecretCode">取 消</el-button>
+          <el-button type="primary" @click="passwordChange">修 改</el-button>
         </span>
     </el-dialog>
   </v-app>
@@ -99,6 +148,7 @@
 
 <script>
 import API from '../js/api'
+import axios from 'axios'
 
 export default {
   name: 'page-frame',
@@ -118,8 +168,22 @@ export default {
         {index: '5', icon: 'el-icon-picture', title: '图片管理', submenu: [{index: '/imageList', title: '帖子图片列表', route: 'imageList'}, {index: '/uploadPicture', title: '添加图片', route: 'uploadPicture'}]},
         {index: '6', icon: 'el-icon-s-order', title: '系统信息管理', submenu: [{index: '/systemInformationList', title: '系统信息列表', route: 'systemInformationList'}, {index: '/releaseSystemMessage', title: '发布系统消息', route: 'releaseSystemMessage'}]}
       ],
-      // 修改管理员消息的对话框打开标识
-      dialogAlter: false
+      // 修改管理员信息的对话框打开标识
+      dialogAlterInfo: false,
+      // 修改管理员密码的对话框打开标识
+      dialogAlterSecretCode: false,
+      // 修改密码
+      password: '',
+      // 确认密码
+      configPW: '',
+      // 修改密码验证码
+      verificationCode: '',
+      // 图片地址
+      imageUrl: '',
+      // 图片文件
+      picFile: null,
+      // 头像修改了返回的图片id
+      modifyPicId: null
     }
   },
   methods: {
@@ -139,31 +203,112 @@ export default {
     },
     // 管理员修改登录密码
     modifyPW () {
-
+      this.dialogAlterSecretCode = true
     },
     // 管理员修改信息
     modifyInfo () {
-      this.dialogAlter = true
+      this.dialogAlterInfo = true
     },
-    // 提交修改
-    async commitChange () {
-      let params = {
-        sysid: this.systemMsgForm.id,
-        title: this.systemMsgForm.title,
-        content: this.systemMsgForm.content
-      }
-      let [err, res] = await API.systemInfoList.modifySystemInfo(params)
+    // 发送修改密码验证码
+    async getVerificationCode () {
+      let params = {mail: this.adminInfo.mail}
+      let [err, res] = await API.admin.getVerificationCode(params)
       if (err || res.code !== '200') {
-        this.$message.error('系统消息修改失败')
+        this.$message.error('修改密码验证码发送失败')
+      }
+    },
+    // 密码修改
+    async passwordChange () {
+      if (this.password === null || this.password === '') {
+        this.$message.warning('密码不能为空！')
+        return
+      }
+      if (this.password !== this.configPW) {
+        this.$message.warning('密码和确认密码不一致！')
+        return
+      }
+      if (this.verificationCode === null || this.verificationCode === '') {
+        this.$message.warning('验证码不能为空！')
+        return
+      }
+      let params = {
+        adid: this.adminInfo.adid,
+        password: this.password,
+        captcha: this.verificationCode
+      }
+      let [err, res] = await API.admin.modifyPW(params)
+      if (err || res.code !== '200') {
+        this.$message.error('管理员修改密码失败')
         return
       }
       this.$message.success(res.msg)
-      this.cancelForm()
-      await this.getSystemInfoList()
+      this.cancelFormSecretCode()
     },
-    // 取消修改
-    cancelForm () {
-      this.dialogAlter = false
+    // 获取管理员上传的头像
+    handleAddChange (file) {
+      this.imageUrl = URL.createObjectURL(file.raw)
+      this.picFile = file
+    },
+    // 提交修改
+    async commitChange () {
+      if (this.picFile !== null) {
+        let formData = new FormData()
+        // 将文件放进去
+        formData.append('file', this.picFile.raw)
+        axios({
+          method: 'post',
+          url: 'http://localhost:8888/upHeadFile',
+          data: formData
+        }).then(res => {
+          console.log(res)
+          if (res.data.code !== '200') {
+            this.$message.error(res.data.msg)
+          }
+          this.modifyPicId = res.data.data.picid
+          this.adminInfo.picUrl = res.data.data.url
+          this.modify()
+        }).catch(err => {
+          this.$message.error(err)
+        })
+      } else {
+        await this.modify()
+      }
+    },
+    // 管理员普通信息的修改
+    async modify () {
+      let params = {
+        adid: this.adminInfo.adid,
+        username: this.adminInfo.username,
+        mail: this.adminInfo.mail,
+        tel: this.adminInfo.tel
+      }
+      if (this.modifyPicId !== null) {
+        Object.assign(params, {
+          picaid: this.modifyPicId
+        })
+      }
+      let [err, res] = await API.admin.modifyAdminInfo(params)
+      if (err || res.code !== '200') {
+        this.$message.error('管理员信息修改失败')
+        return
+      }
+      this.$message.success(res.msg)
+      localStorage.setItem('adminInfo', JSON.stringify(res.data))
+      this.cancelFormInfo()
+    },
+    // 取消修改管理员信息
+    cancelFormInfo () {
+      this.dialogAlterInfo = false
+      this.imageUrl = null
+      this.picFile = null
+      this.modifyPicId = null
+    },
+    // 取消修改管理员密码
+    cancelFormSecretCode () {
+      this.dialogAlterSecretCode = false
+      this.password = ''
+      this.configPW = ''
+      this.verificationCode = ''
     },
     // 注销
     logOut () {

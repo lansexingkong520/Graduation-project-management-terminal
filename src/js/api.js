@@ -68,7 +68,20 @@ function API () {
     },
     // 获取验证码
     getCode () {
-      return that.url('/tbAdmin/getCode?' + (Math.floor(Math.random() * 1000)))
+      return that.url('/getCode?' + (Math.floor(Math.random() * 1000)))
+    }
+  }
+
+  this.admin = {
+    // 获取修改密码的验证码
+    getVerificationCode (params) {
+      return that.post('/tbAdmin/mailSendCaptcha', params)
+    },
+    modifyPW (params) {
+      return that.post('/tbAdmin/modifyPW', params)
+    },
+    modifyAdminInfo (params) {
+      return that.post('/tbAdmin/modifyAdminInfo', params)
     }
   }
 

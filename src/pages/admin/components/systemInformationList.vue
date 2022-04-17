@@ -91,7 +91,7 @@
                     {{ scope.row[item.value] }}
                   </div>
                 </template>
-                <span style="max-width: 450px">{{ scope.row[item.value] }}</span>
+                <span style="max-width: 450px"  class="ellipsisText_3">{{ scope.row[item.value] }}</span>
               </v-tooltip>
             </div>
             <!-- 除了系统消息标题、内容和操作列的显示 -->

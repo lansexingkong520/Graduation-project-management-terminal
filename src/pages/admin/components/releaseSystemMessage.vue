@@ -19,7 +19,7 @@
           <el-input
             type="textarea"
             :autosize="{ minRows: 10, maxRows: 12}"
-            :maxlength="255"
+            :maxlength="1000"
             :show-word-limit="true"
             placeholder="请输入消息内容"
             v-model="systemMsgForm.content"></el-input>
