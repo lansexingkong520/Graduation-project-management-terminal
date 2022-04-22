@@ -139,10 +139,12 @@ export default {
       this.codeURL = API.login.getCode()
     }
   },
-  created () {
+  mounted () {
     if (localStorage.getItem('adminInfo')) {
       location.href = 'admin.html'
     }
+  },
+  created () {
     this.initPage()
     this.codeURL = API.login.getCode()
   }

@@ -164,6 +164,11 @@ export default {
         }
         count++
       }
+      // 经过测试发现在最后的图片没有满四张，没有加入img数组
+      if (list.length !== 0) {
+        this.imgList.push(list)
+        list = []
+      }
       Object.assign(this.pagination[this.favorite], {
         size: res.count
       })
